@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-cursive: 'Great Vibes', cursive;
+
+  /* Premium curated palette based on Heavenly Goods physical packaging */
+  --color-brand-pink-light: #fff0f3;
+  --color-brand-pink-soft: #fdf2f4;
+  --color-brand-pink: #FFC2D1;
+  --color-brand-pink-dark: #f472b6;
+  
+  --color-brand-orange-light: #ffedd5;
+  --color-brand-orange: #FF6B35;
+  --color-brand-orange-dark: #ea580c;
+
+  --color-brand-taupe-light: #FDFBF7;
+  --color-brand-taupe: #a8a29e;
+  --color-brand-taupe-dark: #57534e;
+  --color-brand-taupe-deep: #292524;
+
+  --color-brand-gold-light: #fef3c7;
+  --color-brand-gold: #D4AF37; /* true metallic gold */
+  --color-brand-gold-dark: #b45309;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  /* Custom Premium Shadow */
+  --shadow-premium: 0 10px 40px -10px rgba(255, 107, 53, 0.1), 0 4px 6px -4px rgba(255, 194, 209, 0.2);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Custom brand elements */
+body {
+  background-color: var(--color-brand-pink-soft);
+  color: var(--color-brand-taupe-deep);
+}
+
+/* Custom scrollbars matching the pastel pink palette */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-brand-pink-soft);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-pink);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-pink-dark);
+}
+
+/* Premium Tactile / Hand-crafted Aesthetic Elements */
+
+.texture-crinkle {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.6) 0%, transparent 70%),
+    repeating-linear-gradient(42deg, rgba(255, 194, 209, 0.07) 0px, rgba(255, 194, 209, 0.07) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-48deg, rgba(255, 107, 53, 0.04) 0px, rgba(255, 107, 53, 0.04) 1.5px, transparent 1.5px, transparent 10px);
+  background-color: var(--color-brand-pink-light);
+}
+
+.polaroid-card {
+  background: #ffffff;
+  padding: 14px 14px 28px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 194, 209, 0.4);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 20px -10px rgba(87, 83, 78, 0.15),
+    inset 0 0 40px rgba(255, 240, 243, 0.3);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.polaroid-card:hover {
+  transform: translateY(-12px) scale(1.02) rotate(0deg) !important;
+  box-shadow: 
+    0 20px 35px -10px rgba(255, 107, 53, 0.18),
+    0 10px 20px -5px rgba(255, 194, 209, 0.25);
+  border-color: var(--color-brand-orange-light);
+  z-index: 20;
+}
+
+.gold-foil-border {
+  position: relative;
+}
+
+.gold-foil-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-gold-light) 0%,
+    var(--color-brand-gold) 25%,
+    #fffbeb 50%,
+    var(--color-brand-gold) 75%,
+    var(--color-brand-gold-dark) 100%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Glassmorphism backing */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Cursive font size adjustments */
+.cursive-title {
+  font-family: var(--font-cursive);
+}
+
+/* Soft transition globally */
+.smooth-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Floating Addition Animations */
+@keyframes rise-fade {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-35px) scale(0.85);
+    opacity: 0;
+  }
+}
+
+.animate-rise-fade {
+  animation: rise-fade 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Endless scrolling marquee continuous pan */
+@keyframes marquee-pan {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-pan {
+  display: flex;
+  width: max-content;
+  animation: marquee-pan 38s linear infinite;
+}
+
+.animate-marquee-pan:hover {
+  animation-play-state: paused;
+}
