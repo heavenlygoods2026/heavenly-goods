@@ -4,8 +4,9 @@ import { db, storage, auth } from '../firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Edit2, LogOut, UploadCloud, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, LogOut, UploadCloud, Loader2, Package, Archive } from 'lucide-react';
 import type { Product, ProductOption } from '../data/products';
+import { OrdersTab } from '../components/admin/OrdersTab';
 
 
 // Helper functions for non-linear, centered scale slider mapping (center of slider at 0.0 represents 1.0x scale)
@@ -39,6 +40,8 @@ export default function Admin() {
     return () => unsubscribe();
   }, []);
   
+  const [activeTab, setActiveTab] = useState<'inventory' | 'orders'>('inventory');
+  
   const { products, loading: productsLoading } = useProducts();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -71,7 +74,7 @@ export default function Admin() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       alert("Login failed. Check your email and password.");
     }
@@ -285,6 +288,23 @@ export default function Admin() {
           <div className="font-serif text-xl font-bold text-brand-taupe-deep flex items-center gap-2">
             Dashboard <span className="font-cursive text-brand-gold text-sm mt-1">manager</span>
           </div>
+          
+          {/* Tab Navigation */}
+          <div className="hidden sm:flex bg-brand-pink-soft/30 p-1 rounded-xl border border-brand-pink/30">
+            <button
+              onClick={() => setActiveTab('inventory')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-white text-brand-orange shadow-sm border border-brand-pink/50' : 'text-brand-taupe hover:text-brand-taupe-deep'}`}
+            >
+              <Archive size={16} /> Inventory
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'orders' ? 'bg-white text-brand-orange shadow-sm border border-brand-pink/50' : 'text-brand-taupe hover:text-brand-taupe-deep'}`}
+            >
+              <Package size={16} /> Orders
+            </button>
+          </div>
+
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 text-sm text-brand-taupe-dark hover:text-brand-orange transition-colors cursor-pointer"
@@ -294,9 +314,31 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 mt-8 flex flex-col lg:flex-row gap-8">
+      {/* Mobile Tab Navigation (Visible only on small screens) */}
+      <div className="sm:hidden px-6 pt-4">
+        <div className="flex bg-brand-pink-soft/30 p-1 rounded-xl border border-brand-pink/30 w-full">
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`flex-1 flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-white text-brand-orange shadow-sm border border-brand-pink/50' : 'text-brand-taupe hover:text-brand-taupe-deep'}`}
+          >
+            <Archive size={16} /> Inventory
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex-1 flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'orders' ? 'bg-white text-brand-orange shadow-sm border border-brand-pink/50' : 'text-brand-taupe hover:text-brand-taupe-deep'}`}
+          >
+            <Package size={16} /> Orders
+          </button>
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-6 mt-6 sm:mt-8">
         
-        {/* Left Column: Form */}
+        {activeTab === 'orders' ? (
+          <OrdersTab />
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Column: Form */}
         <div className="lg:w-1/3">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-pink/20 sticky top-24">
             <h2 className="font-serif text-2xl font-bold mb-6">
@@ -718,7 +760,8 @@ export default function Admin() {
             )}
           </div>
         </div>
-
+      </div>
+      )}
       </main>
     </div>
   );

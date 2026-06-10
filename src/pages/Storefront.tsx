@@ -157,7 +157,20 @@ export default function Storefront() {
   }, [scriptureCard]);
 
   useEffect(() => {
-    if (window.location.search.includes('cart=true')) {
+    if (window.location.search.includes('checkout=success')) {
+      setTimeout(() => {
+        setCartItems([]);
+        setGiftNote('');
+        setIsCheckoutMockOpen(true); // Reusing the mock dialog to show actual success message
+      }, 0);
+      try {
+        localStorage.removeItem('hg_cart');
+        localStorage.removeItem('hg_gift_note');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.warn("Failed to clean up checkout parameters", e);
+      }
+    } else if (window.location.search.includes('cart=true')) {
       try {
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
@@ -1143,7 +1156,11 @@ export default function Storefront() {
                             stripePriceId: prod?.stripePriceId || 'price_missing'
                           };
                         });
-                        const response = await createCheckoutSession({ cartItems: cartWithStripe }) as { data: { url: string } };
+                        const response = await createCheckoutSession({ 
+                          cartItems: cartWithStripe,
+                          giftNote: giftNote.trim() || undefined,
+                          scriptureCard
+                        }) as { data: { url: string } };
                         window.location.href = response.data.url;
                       } catch (error) {
                         console.error('Checkout error:', error);
