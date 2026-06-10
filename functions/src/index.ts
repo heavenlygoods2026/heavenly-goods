@@ -89,10 +89,22 @@ export const syncProductToStripe = functions.runWith({ secrets: ["STRIPE_SECRET_
     }
   });
 
+interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  selectedOption?: string;
+  customText?: string;
+  selectedImage?: string;
+  stripePriceId: string;
+}
+
 /**
  * Callable function to create a Stripe Checkout Session for the Storefront cart.
  */
-export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"] }).https.onCall(async (data, context) => {
+export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"] }).https.onCall(async (data) => {
   const { cartItems, giftNote, scriptureCard } = data;
 
   if (!cartItems || cartItems.length === 0) {
@@ -104,7 +116,7 @@ export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRE
     const orderRef = admin.firestore().collection('orders').doc();
     const orderId = orderRef.id;
 
-    const subtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+    const subtotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
     // Rough estimate for initial write, webhook will finalize amount
     const estimatedShipping = subtotal >= 35 ? 0 : 4.50; 
     
@@ -112,7 +124,7 @@ export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRE
       id: orderId,
       status: 'Payment Pending',
       date: new Date().toISOString(),
-      items: cartItems.map((item: any) => ({
+      items: cartItems.map((item: CartItem) => ({
         id: item.id,
         productId: item.productId,
         name: item.name,
@@ -131,7 +143,7 @@ export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRE
     });
 
     // 2. Prepare Stripe line items
-    const lineItems = cartItems.map((item: any) => ({
+    const lineItems = cartItems.map((item: CartItem) => ({
       price: item.stripePriceId,
       quantity: item.quantity,
     }));
@@ -181,9 +193,10 @@ export const stripeWebhook = functions.runWith({ secrets: ["STRIPE_WEBHOOK_SECRE
 
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-  } catch (err: any) {
-    console.error(`Webhook signature verification failed: ${err.message}`);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`Webhook signature verification failed: ${errorMessage}`);
+    res.status(400).send(`Webhook Error: ${errorMessage}`);
     return;
   }
 

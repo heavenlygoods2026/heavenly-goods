@@ -65,7 +65,7 @@ export function OrdersTab() {
                   <span className="font-bold text-brand-taupe-deep">{order.id}</span>
                   {getStatusBadge(order.status)}
                 </div>
-                <div className="text-sm text-brand-taupe-dark mb-2">{order.customer.name}</div>
+                <div className="text-sm text-brand-taupe-dark mb-2">{order.customer?.name || 'Pending Payment Info'}</div>
                 <div className="flex justify-between items-center text-xs text-brand-taupe">
                   <span>{new Date(order.date).toLocaleDateString()}</span>
                   <span className="font-bold">${order.total.toFixed(2)}</span>
@@ -105,9 +105,11 @@ export function OrdersTab() {
                     <MapPin size={14} /> Shipping Details
                   </h3>
                   <div className="bg-brand-taupe-light/20 p-4 rounded-xl border border-brand-pink/30 text-sm">
-                    <p className="font-bold text-brand-taupe-deep mb-1">{selectedOrder.customer.name}</p>
-                    <p className="text-brand-taupe-dark">{selectedOrder.customer.address}</p>
-                    <p className="text-brand-taupe-dark">{selectedOrder.customer.city}, {selectedOrder.customer.state} {selectedOrder.customer.zip}</p>
+                    <p className="font-bold text-brand-taupe-deep mb-1">{selectedOrder.customer?.name || 'Pending Checkout'}</p>
+                    <p className="text-brand-taupe-dark">{selectedOrder.customer?.address || 'Address pending payment completion...'}</p>
+                    <p className="text-brand-taupe-dark">
+                      {selectedOrder.customer?.city ? `${selectedOrder.customer.city}, ${selectedOrder.customer.state} ${selectedOrder.customer.zip}` : ''}
+                    </p>
                   </div>
                 </div>
 
@@ -116,7 +118,7 @@ export function OrdersTab() {
                     <Mail size={14} /> Contact
                   </h3>
                   <p className="text-sm text-brand-taupe-dark bg-brand-taupe-light/20 p-3 rounded-lg border border-brand-pink/30">
-                    {selectedOrder.customer.email}
+                    {selectedOrder.customer?.email || 'N/A'}
                   </p>
                 </div>
 

@@ -18,7 +18,7 @@ export function useProducts() {
         fetchedProducts.push({
           id: doc.id,
           ...data,
-          price: typeof data.price === 'number' ? data.price : parseFloat(data.price as any) || 0
+          price: typeof data.price === 'number' ? data.price : parseFloat(data.price as string) || 0
         } as Product);
       });
 
