@@ -9,6 +9,7 @@ import {
   ArrowRight, 
   Gift 
 } from 'lucide-react';
+import type { CartItem } from './Storefront';
 
 export default function About() {
   const [bilingual, setBilingual] = useState<boolean>(() => {
@@ -36,7 +37,7 @@ export default function About() {
       try {
         const saved = localStorage.getItem('hg_cart');
         const items = saved ? JSON.parse(saved) : [];
-        const count = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+        const count = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
         setBagCount(count);
       } catch {
         setBagCount(0);
@@ -326,7 +327,7 @@ export default function About() {
             <div className="flex-1 w-full flex justify-center relative">
               <div className="relative w-full max-w-lg h-[440px] sm:h-[480px]">
                 {/* Polaroid 1 (Our Story Portrait) */}
-                <div className="polaroid-card absolute top-4 left-4 w-68 sm:w-76 rotate-[-3deg] z-10 transition-all duration-300 hover:scale-105 hover:z-30 cursor-pointer">
+                <div className="polaroid-card absolute top-4 left-2 sm:left-4 w-64 sm:w-76 rotate-[-2deg] z-10 transition-all duration-300 hover:scale-105 hover:z-30 cursor-pointer">
                   <div className="aspect-[4/5] rounded bg-brand-pink/5 overflow-hidden relative shadow-inner">
                     <img 
                       src="/images/products/our-story/our-story-1.jpg.avif" 
@@ -358,7 +359,7 @@ export default function About() {
                 </div>
 
                 {/* Small handwritten card embellishment */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur px-4 py-2 rounded border border-brand-gold/40 shadow-md rotate-[12deg] z-20 pointer-events-none text-center">
+                <div className="absolute top-[68%] left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur px-4 py-2 rounded border border-brand-gold/40 shadow-md rotate-[12deg] z-20 pointer-events-none text-center">
                   <span className="font-cursive text-lg text-brand-orange-dark block font-semibold">
                     heavenly goods ❀
                   </span>
@@ -413,7 +414,7 @@ export default function About() {
                 <div className="w-8 h-8 rounded-full border border-brand-pink bg-white flex items-center justify-center mx-auto text-brand-orange font-bold text-xs shadow-sm">
                   ✨
                 </div>
-                <span className="font-cursive text-3xl text-brand-gold-dark block select-none">
+                <span className="font-cursive text-3xl text-brand-gold-dark block select-none mt-3">
                   {bilingual ? 'hecho con amor' : 'made with love'}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-brand-taupe-dark/70 font-bold block">

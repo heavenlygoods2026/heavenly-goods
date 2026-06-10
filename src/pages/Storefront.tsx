@@ -16,6 +16,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
+import { functions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
 import type { Product, ProductOption } from '../data/products';
 
 export interface CartItem {
@@ -62,6 +64,8 @@ const scriptureVerses = {
   }
 };
 
+const generateCartItemId = () => `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 export default function Storefront() {
   const [bilingual, setBilingual] = useState<boolean>(() => {
     try {
@@ -86,8 +90,15 @@ export default function Storefront() {
       return [];
     }
   });
-  const [isBagOpen, setIsBagOpen] = useState(false);
+  const [isBagOpen, setIsBagOpen] = useState(() => {
+    try {
+      return window.location.search.includes('cart=true');
+    } catch {
+      return false;
+    }
+  });
   const [isCheckoutMockOpen, setIsCheckoutMockOpen] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   
   const [giftNote, setGiftNote] = useState<string>(() => {
     try {
@@ -147,7 +158,6 @@ export default function Storefront() {
 
   useEffect(() => {
     if (window.location.search.includes('cart=true')) {
-      setIsBagOpen(true);
       try {
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
@@ -155,11 +165,18 @@ export default function Storefront() {
       }
     }
   }, []);
-
+  useEffect(() => {
+    if (window.location.hash === '#catalog') {
+      const timer = setTimeout(() => {
+        document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const { products, loading } = useProducts();
 
   const heroProducts = useMemo(() => {
-    return products.filter(p => p.id !== 'our-story');
+    return products.filter(p => p.id !== 'our-story' && p.stock !== 0);
   }, [products]);
 
   const bagCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems]);
@@ -169,6 +186,12 @@ export default function Storefront() {
     setCartItems(prev => prev.map(item => {
       if (item.id === itemId) {
         const newQty = item.quantity + delta;
+        const prod = products.find(p => p.id === item.productId);
+        
+        // Prevent exceeding stock
+        if (delta > 0 && prod && prod.stock != null && newQty > prod.stock) {
+          return item;
+        }
         
         // Spawn animation bubble and trigger pulse if quantity is increased
         if (delta > 0 && newQty > item.quantity) {
@@ -361,6 +384,7 @@ export default function Storefront() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       if (p.id === 'our-story') return false; // Filter out story metadata
+      if (p.stock === 0) return false; // Hide out of stock items
       if (activeTab === 'all') return true;
       if (activeTab === 'custom') return p.id.includes('create-your-own') || p.id.includes('resin-letter');
       if (activeTab === 'hair') return p.id.includes('crowned-in-grace');
@@ -392,7 +416,7 @@ export default function Storefront() {
     const imageToAdd = modalImages[modalImageIndex] || selectedProduct.heroImage || (selectedProduct.images && selectedProduct.images[0]) || '';
     
     const newCartItem: CartItem = {
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: generateCartItemId(),
       productId: selectedProduct.id,
       name: selectedProduct.name,
       price: selectedProduct.price,
@@ -437,14 +461,14 @@ export default function Storefront() {
   };
 
 
-  // Memoized image list and handlers for the product details modal carousel
-  const modalImages = useMemo(() => {
+  // Image list and handlers for the product details modal carousel
+  const modalImages = (() => {
     if (!selectedProduct) return [];
     const images = selectedProduct.images && selectedProduct.images.length > 0 
       ? selectedProduct.images 
       : [selectedProduct.heroImage || ""];
     return images.filter(img => img && !img.endsWith('.mp4'));
-  }, [selectedProduct]);
+  })();
 
   const handleModalPrev = () => {
     setModalImageIndex((prev) => (prev === 0 ? modalImages.length - 1 : prev - 1));
@@ -478,9 +502,25 @@ export default function Storefront() {
 
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-brand-taupe-dark">
-            <Link to="/" className="hover:text-brand-orange smooth-hover">{current.navHome}</Link>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className="hover:text-brand-orange smooth-hover cursor-pointer bg-transparent border-0 font-medium"
+            >
+              {current.navHome}
+            </button>
             <Link to="/about" className="hover:text-brand-orange smooth-hover">{current.navMission}</Link>
-            <a href="/#catalog" className="hover:text-brand-orange smooth-hover">{current.navCatalog}</a>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+              }} 
+              className="hover:text-brand-orange smooth-hover cursor-pointer bg-transparent border-0 font-medium"
+            >
+              {current.navCatalog}
+            </button>
           </nav>
 
           {/* Action Buttons */}
@@ -658,7 +698,7 @@ export default function Storefront() {
               <div className="relative w-full max-w-md h-[400px]">
                 
                 {/* Polaroid 1 (Our Story Portrait) */}
-                <div className="polaroid-card absolute top-4 left-4 w-64 rotate-[-3deg] z-10">
+                <div className="polaroid-card absolute top-4 left-2 sm:left-4 w-60 sm:w-64 rotate-[-2deg] z-10">
                   <div className="aspect-[4/5] rounded bg-brand-pink/5 overflow-hidden relative shadow-inner">
                     <img 
                       src="/images/products/our-story/our-story-1.jpg.avif" 
@@ -690,7 +730,7 @@ export default function Storefront() {
                 </div>
 
                 {/* Small handwritten card embellishment */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur px-4 py-2 rounded border border-brand-gold/40 shadow-md rotate-[12deg] z-20 pointer-events-none text-center">
+                <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur px-4 py-2 rounded border border-brand-gold/40 shadow-md rotate-[12deg] z-20 pointer-events-none text-center">
                   <span className="font-cursive text-lg text-brand-orange-dark block font-semibold">
                     made with love ❀
                   </span>
@@ -791,7 +831,7 @@ export default function Storefront() {
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'all' | 'custom' | 'hair' | 'keychains' | 'individuals')}
                 className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-brand-orange text-white shadow-md scale-105 border border-brand-orange'
@@ -1090,13 +1130,33 @@ export default function Storefront() {
                   </div>
                   
                   <button
-                    onClick={() => {
-                      setIsBagOpen(false);
-                      setIsCheckoutMockOpen(true);
+                    disabled={isCheckingOut}
+                    onClick={async () => {
+                      setIsCheckingOut(true);
+                      try {
+                        const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+                        // Get Stripe Price IDs from products collection data
+                        const cartWithStripe = cartItems.map(item => {
+                          const prod = products.find(p => p.id === item.productId);
+                          return {
+                            ...item,
+                            stripePriceId: prod?.stripePriceId || 'price_missing'
+                          };
+                        });
+                        const response = await createCheckoutSession({ cartItems: cartWithStripe }) as { data: { url: string } };
+                        window.location.href = response.data.url;
+                      } catch (error) {
+                        console.error('Checkout error:', error);
+                        // Fallback to the mockup if Stripe fails or isn't set up yet
+                        setIsBagOpen(false);
+                        setIsCheckoutMockOpen(true);
+                      } finally {
+                        setIsCheckingOut(false);
+                      }
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-brand-orange hover:bg-brand-orange-dark text-white font-extrabold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow hover:shadow-md active:scale-[0.99] gold-foil-border uppercase tracking-widest"
+                    className="w-full py-3.5 rounded-2xl bg-brand-orange hover:bg-brand-orange-dark text-white font-extrabold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow hover:shadow-md active:scale-[0.99] gold-foil-border uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <span>🕊️ {current.bagCheckout}</span>
+                    <span>{isCheckingOut ? 'Loading...' : `🕊️ ${current.bagCheckout}`}</span>
                   </button>
                 </div>
               )}
@@ -1295,6 +1355,11 @@ export default function Storefront() {
                       Hand-crafted
                     </span>
                   </div>
+                  {selectedProduct.stock != null && selectedProduct.stock > 0 && selectedProduct.stock <= 5 && (
+                    <div className="mt-2 text-xs font-bold text-brand-orange-dark bg-brand-orange-light/40 border border-brand-orange/20 px-3 py-1.5 rounded-lg inline-block">
+                      {bilingual ? `¡Solo quedan ${selectedProduct.stock} en stock!` : `Only ${selectedProduct.stock} left in stock!`}
+                    </div>
+                  )}
                 </div>
 
                 <div className="h-[1px] bg-brand-pink/30" />
@@ -1419,7 +1484,7 @@ export default function Storefront() {
               {/* Add to Bag and Shipping block */}
               <div className="mt-8 space-y-4">
                 <button
-                  disabled={isAdding || (selectedProduct.hasCustomText && !customWord.trim())}
+                  disabled={isAdding || (selectedProduct.hasCustomText && !customWord.trim()) || (selectedProduct.stock != null && cartItems.filter(i => i.productId === selectedProduct.id).reduce((sum, i) => sum + i.quantity, 0) >= selectedProduct.stock)}
                   onClick={handleAddToBagSubmit}
                   className={`w-full py-3.5 rounded-xl text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
                     isAdding 

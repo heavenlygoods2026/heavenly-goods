@@ -16,6 +16,10 @@ export interface Product {
   options?: ProductOption[];
   imagePositions?: Record<string, string>; // Maps image URL -> object-position string e.g. "30% 45%"
   imageScales?: Record<string, number>;    // Maps image URL -> scale zoom level (e.g. 1.2)
+  stock?: number;
+  stripeProductId?: string;
+  stripePriceId?: string;
+  _lastSyncedPrice?: number;
 }
 
 export const products: Product[] = [

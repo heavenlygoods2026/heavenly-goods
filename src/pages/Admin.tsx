@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProducts } from '../hooks/useProducts';
 import { db, storage, auth } from '../firebase';
-import { signInAnonymously } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, Edit2, LogOut, UploadCloud, Loader2 } from 'lucide-react';
 import type { Product, ProductOption } from '../data/products';
 
-const HARDCODED_PASSWORD = 'heavenlyadmin';
 
 // Helper functions for non-linear, centered scale slider mapping (center of slider at 0.0 represents 1.0x scale)
 const getSliderVal = (scale: number) => {
@@ -27,10 +26,18 @@ const getScaleFromVal = (v: number) => {
 };
 
 export default function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('heavenly_admin_auth') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
   
   const { products, loading: productsLoading } = useProducts();
   
@@ -40,6 +47,7 @@ export default function Admin() {
   // Form State
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('');
   const [verbiage, setVerbiage] = useState('');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -61,23 +69,22 @@ export default function Admin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === HARDCODED_PASSWORD) {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.warn("Firebase anonymous authentication not enabled or failed:", err);
-      }
-      localStorage.setItem('heavenly_admin_auth', 'true');
-      setIsAuthenticated(true);
-    } else {
-      alert("Incorrect password");
+    try {
+      await signInWithEmailAndPassword(auth, emailInput, passwordInput);
+    } catch (err: any) {
+      console.error(err);
+      alert("Login failed. Check your email and password.");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('heavenly_admin_auth');
-    setIsAuthenticated(false);
-    setPasswordInput('');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setEmailInput('');
+      setPasswordInput('');
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const resetForm = () => {
@@ -85,6 +92,7 @@ export default function Admin() {
     setCurrentId(null);
     setName('');
     setPrice('');
+    setStock('');
     setVerbiage('');
     setDescription('');
     setImages([]);
@@ -102,6 +110,7 @@ export default function Admin() {
     setCurrentId(product.id);
     setName(product.name);
     setPrice(product.price.toString());
+    setStock(product.stock != null ? product.stock.toString() : '');
     setVerbiage(product.verbiage);
     setDescription(product.description);
     setImages(product.images || []);
@@ -140,8 +149,10 @@ export default function Admin() {
         const file = files[i];
         const filename = `${Date.now()}_${file.name}`;
         const storageRef = ref(storage, `products/${filename}`);
-        
-        await uploadBytes(storageRef, file);
+        const metadata = {
+          contentType: file.type || (file.name.endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream')
+        };
+        await uploadBytes(storageRef, file, metadata);
         const downloadURL = await getDownloadURL(storageRef);
         newImageUrls.push(downloadURL);
       }
@@ -193,6 +204,7 @@ export default function Admin() {
     const productData = {
       name,
       price: parseFloat(price) || 0,
+      stock: stock === '' ? null : parseInt(stock, 10),
       verbiage,
       description,
       images,
@@ -223,6 +235,14 @@ export default function Admin() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-brand-pink-soft flex items-center justify-center">
+        <Loader2 size={40} className="animate-spin text-brand-orange" />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-brand-pink-soft flex items-center justify-center p-6">
@@ -232,12 +252,19 @@ export default function Admin() {
           
           <form onSubmit={handleLogin} className="space-y-4">
             <input 
+              type="email" 
+              placeholder="Admin Email" 
+              className="w-full px-4 py-3 rounded-xl border border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-orange/50 transition-all text-center"
+              value={emailInput}
+              onChange={e => setEmailInput(e.target.value)}
+              autoFocus
+            />
+            <input 
               type="password" 
-              placeholder="Enter Admin Password" 
+              placeholder="Password" 
               className="w-full px-4 py-3 rounded-xl border border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-orange/50 transition-all text-center"
               value={passwordInput}
               onChange={e => setPasswordInput(e.target.value)}
-              autoFocus
             />
             <button 
               type="submit"
@@ -285,6 +312,11 @@ export default function Admin() {
               <div>
                 <label className="block text-xs font-bold text-brand-taupe mb-1">Price ($)</label>
                 <input required type="number" step="0.01" value={price} onChange={e=>setPrice(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-brand-pink/50 focus:outline-none focus:border-brand-orange bg-brand-taupe-light/30" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-brand-taupe mb-1">Stock Quantity (Leave blank for infinite)</label>
+                <input type="number" min="0" step="1" value={stock} onChange={e=>setStock(e.target.value)} placeholder="Infinite" className="w-full px-3 py-2 rounded-lg border border-brand-pink/50 focus:outline-none focus:border-brand-orange bg-brand-taupe-light/30" />
               </div>
 
               <div>
@@ -643,6 +675,9 @@ export default function Admin() {
                         <span className="font-extrabold text-brand-orange-dark">${product.price.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-brand-taupe-dark line-clamp-1 mb-1">{product.verbiage}</p>
+                      {product.stock != null && (
+                         <p className={`text-[10px] font-bold uppercase mb-1 ${product.stock === 0 ? 'text-red-500' : 'text-brand-orange'}`}>Stock: {product.stock}</p>
+                      )}
                       <p className="text-xs text-brand-taupe line-clamp-2 leading-relaxed">{product.description}</p>
                       
                       {/* Sub-badges for features */}
