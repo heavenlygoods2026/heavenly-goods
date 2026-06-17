@@ -340,7 +340,7 @@ export default function Admin() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Column: Form */}
         <div className="lg:w-1/3">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-pink/20 sticky top-24">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-pink/20 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
             <h2 className="font-serif text-2xl font-bold mb-6">
               {isEditing ? 'Edit Product' : 'Add New Product'}
             </h2>

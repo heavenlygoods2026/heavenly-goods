@@ -117,6 +117,7 @@ export default function Storefront() {
   });
   
   const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [modalTouchStartX, setModalTouchStartX] = useState<number | null>(null);
   const [selectedOption, setSelectedOption] = useState<ProductOption | null>(null);
 
   // Floating bubbles and cart pulse animations
@@ -489,6 +490,25 @@ export default function Storefront() {
 
   const handleModalNext = () => {
     setModalImageIndex((prev) => (prev === modalImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleModalTouchStart = (e: React.TouchEvent) => {
+    setModalTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleModalTouchEnd = (e: React.TouchEvent) => {
+    if (modalTouchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = modalTouchStartX - touchEndX;
+
+    if (Math.abs(diffX) > 40) {
+      if (diffX > 0) {
+        handleModalNext();
+      } else {
+        handleModalPrev();
+      }
+    }
+    setModalTouchStartX(null);
   };
 
   return (
@@ -1287,7 +1307,11 @@ export default function Storefront() {
 
             {/* Left Side: Product Image Showcase with interactive carousel */}
             <div className="flex-1 bg-brand-pink-soft/20 p-6 flex flex-col items-center justify-center border-r border-brand-pink/20 relative md:max-h-[500px] min-h-[300px]">
-              <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-white border border-brand-pink/30 shadow-md flex items-center justify-center relative group/modal-carousel min-h-[250px] p-4">
+              <div 
+                className="w-full max-w-sm rounded-2xl overflow-hidden bg-white border border-brand-pink/30 shadow-md flex items-center justify-center relative group/modal-carousel min-h-[250px] p-4 touch-pan-y"
+                onTouchStart={handleModalTouchStart}
+                onTouchEnd={handleModalTouchEnd}
+              >
                 {modalImages.length > 0 ? (
                   <div 
                     className="flex transition-transform duration-500 ease-out w-full h-full"
@@ -1561,6 +1585,7 @@ interface ProductCardProps {
 
 function ProductCard({ product, onOpenDetails, viewDetailsText }: ProductCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -1579,6 +1604,27 @@ function ProductCard({ product, onOpenDetails, viewDetailsText }: ProductCardPro
     setCurrentImageIndex((prev) => (prev === imageFiles.length - 1 ? 0 : prev + 1));
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (imageFiles.length <= 1) return;
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || imageFiles.length <= 1) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+
+    if (Math.abs(diffX) > 40) {
+      e.stopPropagation();
+      if (diffX > 0) {
+        setCurrentImageIndex((prev) => (prev === imageFiles.length - 1 ? 0 : prev + 1));
+      } else {
+        setCurrentImageIndex((prev) => (prev === 0 ? imageFiles.length - 1 : prev - 1));
+      }
+    }
+    setTouchStartX(null);
+  };
+
   return (
     <div 
       onClick={() => onOpenDetails(product)}
@@ -1589,7 +1635,11 @@ function ProductCard({ product, onOpenDetails, viewDetailsText }: ProductCardPro
       
       <div className="space-y-4 relative z-10">
         {/* Carousel Image Container - No strict aspect ratio for natural product photo shapes */}
-        <div className="w-full rounded-2xl bg-brand-pink-light/40 flex items-center justify-center overflow-hidden relative border border-brand-pink/10 group/carousel min-h-[220px] shadow-inner">
+        <div 
+          className="w-full rounded-2xl bg-brand-pink-light/40 flex items-center justify-center overflow-hidden relative border border-brand-pink/10 group/carousel min-h-[220px] shadow-inner touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {imageFiles.length > 0 ? (
             <div 
               className="flex transition-transform duration-500 ease-out w-full"
