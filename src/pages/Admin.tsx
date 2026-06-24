@@ -550,17 +550,31 @@ export default function Admin() {
                         }));
                       }}
                     >
-                      <img 
-                        src={adjustingImage} 
-                        alt="Adjusting" 
-                        style={{ 
-                          objectFit: (imageScales[adjustingImage] || 1.0) < 1.0 ? 'contain' : 'cover', 
-                          objectPosition: imagePositions[adjustingImage] || '50% 50%',
-                          transform: `scale(${imageScales[adjustingImage] || 1.0})`,
-                          pointerEvents: 'none'
-                        }} 
-                        className="w-full h-full select-none"
-                      />
+                      {adjustingImage?.endsWith('.mp4') ? (
+                        <video 
+                          src={adjustingImage} 
+                          autoPlay loop muted playsInline
+                          style={{ 
+                            objectFit: (imageScales[adjustingImage] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                            objectPosition: imagePositions[adjustingImage] || '50% 50%',
+                            transform: `scale(${imageScales[adjustingImage] || 1.0})`,
+                            pointerEvents: 'none'
+                          }} 
+                          className="w-full h-full select-none"
+                        />
+                      ) : (
+                        <img 
+                          src={adjustingImage} 
+                          alt="Adjusting" 
+                          style={{ 
+                            objectFit: (imageScales[adjustingImage] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                            objectPosition: imagePositions[adjustingImage] || '50% 50%',
+                            transform: `scale(${imageScales[adjustingImage] || 1.0})`,
+                            pointerEvents: 'none'
+                          }} 
+                          className="w-full h-full select-none"
+                        />
+                      )}
                       <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded-full select-none font-bold">
                         Focus: {imagePositions[adjustingImage] || '50% 50%'}
                       </div>
@@ -605,16 +619,29 @@ export default function Admin() {
                   <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                     {images.map((url, i) => (
                       <div key={i} className={`relative w-20 h-20 flex-shrink-0 rounded-lg border-2 overflow-hidden group ${heroImage === url ? 'border-brand-orange' : 'border-brand-pink'}`}>
-                        <img 
-                          src={url} 
-                          alt="preview" 
-                          style={{ 
-                            objectFit: (imageScales[url] || 1.0) < 1.0 ? 'contain' : 'cover', 
-                            objectPosition: imagePositions[url] || '50% 50%',
-                            transform: `scale(${imageScales[url] || 1.0})`
-                          }}
-                          className="w-full h-full" 
-                        />
+                        {url?.endsWith('.mp4') ? (
+                          <video 
+                            src={url} 
+                            autoPlay loop muted playsInline
+                            style={{ 
+                              objectFit: (imageScales[url] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                              objectPosition: imagePositions[url] || '50% 50%',
+                              transform: `scale(${imageScales[url] || 1.0})`
+                            }}
+                            className="w-full h-full" 
+                          />
+                        ) : (
+                          <img 
+                            src={url} 
+                            alt="preview" 
+                            style={{ 
+                              objectFit: (imageScales[url] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                              objectPosition: imagePositions[url] || '50% 50%',
+                              transform: `scale(${imageScales[url] || 1.0})`
+                            }}
+                            className="w-full h-full" 
+                          />
+                        )}
                         
                         {heroImage === url && (
                           <div className="absolute top-1 left-1 bg-brand-orange text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
@@ -695,16 +722,29 @@ export default function Admin() {
                     {/* Image Preview with custom position and scale alignment */}
                     <div className="w-20 h-20 rounded-lg bg-brand-pink-light flex-shrink-0 overflow-hidden border border-brand-pink/30 flex items-center justify-center relative shadow-inner">
                       {product.heroImage || (product.images && product.images.length > 0) ? (
-                        <img 
-                          src={product.heroImage || product.images[0]} 
-                          alt={product.name} 
-                          style={{ 
-                            objectFit: (product.imageScales?.[product.heroImage || product.images[0]] || 1.0) < 1.0 ? 'contain' : 'cover', 
-                            objectPosition: product.imagePositions?.[product.heroImage || product.images[0]] || '50% 50%',
-                            transform: `scale(${product.imageScales?.[product.heroImage || product.images[0]] || 1.0})`
-                          }}
-                          className="w-full h-full" 
-                        />
+                        (product.heroImage || product.images[0])?.endsWith('.mp4') ? (
+                          <video 
+                            src={product.heroImage || product.images[0]} 
+                            autoPlay loop muted playsInline
+                            style={{ 
+                              objectFit: (product.imageScales?.[product.heroImage || product.images[0]] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                              objectPosition: product.imagePositions?.[product.heroImage || product.images[0]] || '50% 50%',
+                              transform: `scale(${product.imageScales?.[product.heroImage || product.images[0]] || 1.0})`
+                            }}
+                            className="w-full h-full" 
+                          />
+                        ) : (
+                          <img 
+                            src={product.heroImage || product.images[0]} 
+                            alt={product.name} 
+                            style={{ 
+                              objectFit: (product.imageScales?.[product.heroImage || product.images[0]] || 1.0) < 1.0 ? 'contain' : 'cover', 
+                              objectPosition: product.imagePositions?.[product.heroImage || product.images[0]] || '50% 50%',
+                              transform: `scale(${product.imageScales?.[product.heroImage || product.images[0]] || 1.0})`
+                            }}
+                            className="w-full h-full" 
+                          />
+                        )
                       ) : (
                         <span className="text-xl">✨</span>
                       )}

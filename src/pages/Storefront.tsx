@@ -666,11 +666,19 @@ export default function Storefront() {
                         >
                           {/* Giant product image container */}
                           <div className="absolute inset-0 p-4 flex items-center justify-center bg-white transition-all duration-500">
-                            <img 
-                              src={prod.heroImage || prod.images[0]} 
-                              alt={prod.name}
-                              className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105" 
-                            />
+                            {(prod.heroImage || prod.images[0])?.endsWith('.mp4') ? (
+                              <video
+                                src={prod.heroImage || prod.images[0]}
+                                autoPlay loop muted playsInline
+                                className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105"
+                              />
+                            ) : (
+                              <img 
+                                src={prod.heroImage || prod.images[0]} 
+                                alt={prod.name}
+                                className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105" 
+                              />
+                            )}
                           </div>
                           
                           {/* Elegant hover drawer: hidden by default, slides up showing only name & price */}
@@ -694,11 +702,19 @@ export default function Storefront() {
                         >
                           {/* Giant product image container */}
                           <div className="absolute inset-0 p-4 flex items-center justify-center bg-white transition-all duration-500">
-                            <img 
-                              src={prod.heroImage || prod.images[0]} 
-                              alt={prod.name}
-                              className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105" 
-                            />
+                            {(prod.heroImage || prod.images[0])?.endsWith('.mp4') ? (
+                              <video
+                                src={prod.heroImage || prod.images[0]}
+                                autoPlay loop muted playsInline
+                                className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105"
+                              />
+                            ) : (
+                              <img 
+                                src={prod.heroImage || prod.images[0]} 
+                                alt={prod.name}
+                                className="max-h-full max-w-full object-contain rounded-xl transition-transform duration-700 group-hover/slide:scale-105" 
+                              />
+                            )}
                           </div>
                           
                           {/* Elegant hover drawer: hidden by default, slides up showing only name & price */}
@@ -1184,9 +1200,7 @@ export default function Storefront() {
                         window.location.href = response.data.url;
                       } catch (error) {
                         console.error('Checkout error:', error);
-                        // Fallback to the mockup if Stripe fails or isn't set up yet
-                        setIsBagOpen(false);
-                        setIsCheckoutMockOpen(true);
+                        alert("We couldn't prepare your checkout at this time. Please try again or contact support.");
                       } finally {
                         setIsCheckingOut(false);
                       }

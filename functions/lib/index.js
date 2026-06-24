@@ -27,12 +27,15 @@ exports.syncProductToStripe = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"]
         console.log(`Product ${productId} was deleted. Skipping Stripe sync.`);
         return null;
     }
+    // Filter out .mp4 files as Stripe only accepts image formats (JPEG, PNG, GIF)
+    const rawImages = productData.heroImage ? [productData.heroImage] : productData.images || [];
+    const validImages = rawImages.filter((img) => img && !img.endsWith('.mp4'));
     // Prepare Stripe Product payload
     const stripeProductData = {
         name: productData.name || 'Unnamed Product',
         description: productData.description || '',
         active: productData.stock !== 0,
-        images: productData.heroImage ? [productData.heroImage] : productData.images || [],
+        images: validImages,
     };
     let stripeProductId = productData.stripeProductId;
     let stripePriceId = productData.stripePriceId;
@@ -80,7 +83,7 @@ exports.syncProductToStripe = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"]
 /**
  * Callable function to create a Stripe Checkout Session for the Storefront cart.
  */
-exports.createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"] }).https.onCall(async (data, context) => {
+exports.createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"] }).https.onCall(async (data) => {
     const { cartItems, giftNote, scriptureCard } = data;
     if (!cartItems || cartItems.length === 0) {
         throw new functions.https.HttpsError('invalid-argument', 'Cart is empty');
@@ -160,8 +163,9 @@ exports.stripeWebhook = functions.runWith({ secrets: ["STRIPE_WEBHOOK_SECRET", "
         event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
     }
     catch (err) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        res.status(400).send(`Webhook Error: ${err.message}`);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error(`Webhook signature verification failed: ${errorMessage}`);
+        res.status(400).send(`Webhook Error: ${errorMessage}`);
         return;
     }
     if (event.type === 'checkout.session.completed') {
