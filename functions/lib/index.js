@@ -29,7 +29,9 @@ exports.syncProductToStripe = functions.runWith({ secrets: ["STRIPE_SECRET_KEY"]
     }
     // Filter out .mp4 files as Stripe only accepts image formats (JPEG, PNG, GIF)
     const rawImages = productData.heroImage ? [productData.heroImage] : productData.images || [];
-    const validImages = rawImages.filter((img) => img && !img.endsWith('.mp4'));
+    const validImages = rawImages
+        .filter((img) => img && !img.endsWith('.mp4'))
+        .map((img) => img.startsWith('/') ? `https://heavenlygoodss.com${img}` : img);
     // Prepare Stripe Product payload
     const stripeProductData = {
         name: productData.name || 'Unnamed Product',
