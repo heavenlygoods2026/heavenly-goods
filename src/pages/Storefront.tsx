@@ -928,7 +928,7 @@ export default function Storefront() {
           />
           
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white border-l border-brand-pink/30 shadow-2xl relative flex flex-col animate-slide-in texture-crinkle">
+            <div className="w-[calc(100vw-2.5rem)] sm:w-screen max-w-md bg-white border-l border-brand-pink/30 shadow-2xl relative flex flex-col animate-slide-in texture-crinkle">
               
               {/* Drawer Header */}
               <div className="p-6 border-b border-brand-pink/20 flex justify-between items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -967,7 +967,11 @@ export default function Storefront() {
                     {/* Visual Progress Bar */}
                     <div className="w-full bg-brand-pink/30 rounded-full h-2 overflow-hidden shadow-inner">
                       <div 
-                        className="bg-brand-orange h-full rounded-full transition-all duration-700" 
+                        className={`h-full rounded-full transition-all duration-700 ${
+                          cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) >= 35 
+                            ? 'bg-gradient-to-r from-brand-orange via-brand-gold to-brand-orange animate-marquee-pan bg-[length:200%_100%]' 
+                            : 'bg-brand-orange'
+                        }`} 
                         style={{ 
                           width: `${Math.min(100, (cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) / 35) * 100)}%` 
                         }} 
@@ -1012,7 +1016,7 @@ export default function Storefront() {
                           </div>
 
                           {/* Item details */}
-                          <div className="flex-1 min-w-0 pr-6">
+                          <div className="flex-1 min-w-0 pr-8">
                             <h4 className="font-bold text-sm text-brand-taupe-deep truncate mb-0.5">{item.name}</h4>
                             <div className="text-[10px] font-extrabold text-brand-orange-dark mb-2">${item.price.toFixed(2)}</div>
                             
@@ -1056,10 +1060,10 @@ export default function Storefront() {
                           {/* Delete Item Trash Trigger */}
                           <button
                             onClick={() => handleRemoveItem(item.id)}
-                            className="absolute top-4 right-4 p-1.5 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-full transition-colors cursor-pointer shadow-sm hover:scale-105 active:scale-95 z-10"
+                            className="absolute top-3 right-3 p-2 text-brand-taupe/40 hover:bg-red-50 hover:text-red-500 rounded-full transition-all cursor-pointer hover:scale-110 active:scale-95 z-10"
                             title="Remove from bag"
                           >
-                            <X size={10} />
+                            <X size={12} strokeWidth={3} />
                           </button>
                         </div>
                       );
@@ -1205,7 +1209,7 @@ export default function Storefront() {
                         setIsCheckingOut(false);
                       }
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-brand-orange hover:bg-brand-orange-dark text-white font-extrabold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow hover:shadow-md active:scale-[0.99] gold-foil-border uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full py-3.5 rounded-2xl bg-brand-orange hover:bg-brand-orange-dark text-white font-extrabold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow hover:shadow-lg hover:shadow-brand-orange/30 active:scale-[0.99] gold-foil-border uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <span>{isCheckingOut ? 'Loading...' : `🕊️ ${current.bagCheckout}`}</span>
                   </button>
