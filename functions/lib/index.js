@@ -109,6 +109,8 @@ exports.createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRET_KEY
                 quantity: item.quantity,
                 selectedVariant: item.selectedOption || null,
                 customText: item.customText || null,
+                beadType: item.beadType || null,
+                braceletSize: item.braceletSize || null,
                 image: item.selectedImage || null
             })),
             subtotal,

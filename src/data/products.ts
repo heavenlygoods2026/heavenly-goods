@@ -1,6 +1,7 @@
 export interface ProductOption {
   label: string;
   imageTether?: string; // Optional URL of tethered image
+  stock?: number; // Optional stock quantity specific to this variant
 }
 
 export interface Product {
@@ -13,6 +14,10 @@ export interface Product {
   heroImage?: string;
   hasCustomText?: boolean;
   customTextLabel?: string;
+  hasBeadStyle?: boolean;
+  beadOptions?: string[];
+  hasWristSize?: boolean;
+  sizeOptions?: string[];
   options?: ProductOption[];
   imagePositions?: Record<string, string>; // Maps image URL -> object-position string e.g. "30% 45%"
   imageScales?: Record<string, number>;    // Maps image URL -> scale zoom level (e.g. 1.2)

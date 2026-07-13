@@ -103,6 +103,8 @@ interface CartItem {
   quantity: number;
   selectedOption?: string;
   customText?: string;
+  beadType?: string;
+  braceletSize?: string;
   selectedImage?: string;
   stripePriceId: string;
 }
@@ -138,6 +140,8 @@ export const createCheckoutSession = functions.runWith({ secrets: ["STRIPE_SECRE
         quantity: item.quantity,
         selectedVariant: item.selectedOption || null,
         customText: item.customText || null,
+        beadType: item.beadType || null,
+        braceletSize: item.braceletSize || null,
         image: item.selectedImage || null
       })),
       subtotal,

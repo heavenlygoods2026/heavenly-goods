@@ -28,6 +28,8 @@ export interface CartItem {
   selectedImage: string;
   selectedOption?: string;
   customText?: string;
+  beadType?: string;
+  braceletSize?: string;
   quantity: number;
 }
 
@@ -203,8 +205,18 @@ export default function Storefront() {
         const prod = products.find(p => p.id === item.productId);
         
         // Prevent exceeding stock
-        if (delta > 0 && prod && prod.stock != null && newQty > prod.stock) {
-          return item;
+        if (delta > 0 && prod) {
+          let limit = prod.stock;
+          if (item.selectedOption && prod.options) {
+             const v = prod.options.find(o => o.label === item.selectedOption);
+             if (v && v.stock != null) limit = v.stock;
+          }
+          if (limit != null) {
+            const currentTotal = prev.filter(i => i.productId === item.productId && i.selectedOption === item.selectedOption).reduce((sum, i) => sum + i.quantity, 0);
+            if (currentTotal + delta > limit) {
+              return item;
+            }
+          }
         }
         
         // Spawn animation bubble and trigger pulse if quantity is increased
@@ -437,6 +449,8 @@ export default function Storefront() {
       selectedImage: imageToAdd,
       selectedOption: selectedOption?.label || undefined,
       customText: selectedProduct.hasCustomText && customWord.trim() ? customWord.trim() : undefined,
+      beadType: selectedProduct.hasBeadStyle ? beadType : undefined,
+      braceletSize: selectedProduct.hasWristSize ? braceletSize : undefined,
       quantity: 1,
     };
 
@@ -446,7 +460,9 @@ export default function Storefront() {
         const existingIdx = prev.findIndex(item => 
           item.productId === newCartItem.productId &&
           item.selectedOption === newCartItem.selectedOption &&
-          item.customText === newCartItem.customText
+          item.customText === newCartItem.customText &&
+          item.beadType === newCartItem.beadType &&
+          item.braceletSize === newCartItem.braceletSize
         );
         
         if (existingIdx > -1) {
@@ -1035,6 +1051,22 @@ export default function Storefront() {
                               </div>
                             )}
 
+                            {/* Dynamic Bead Style & Wrist Size badges */}
+                            {(item.beadType || item.braceletSize) && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {item.beadType && (
+                                  <span className="inline-block text-[9px] font-bold bg-brand-orange-light text-brand-orange-dark px-2 py-0.5 rounded border border-brand-orange/20 shadow-sm animate-scale-up">
+                                    {item.beadType}
+                                  </span>
+                                )}
+                                {item.braceletSize && (
+                                  <span className="inline-block text-[9px] font-bold bg-brand-gold-light text-brand-gold-dark px-2 py-0.5 rounded border border-brand-gold/20 shadow-sm animate-scale-up">
+                                    {item.braceletSize}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
                             {/* Quantity and Actions bar */}
                             <div className="flex items-center gap-3 mt-1">
                               <div className="flex items-center border border-brand-pink/30 rounded-full bg-white px-2 py-0.5 shadow-sm">
@@ -1414,11 +1446,25 @@ export default function Storefront() {
                       Hand-crafted
                     </span>
                   </div>
-                  {selectedProduct.stock != null && selectedProduct.stock > 0 && selectedProduct.stock <= 5 && (
-                    <div className="mt-2 text-xs font-bold text-brand-orange-dark bg-brand-orange-light/40 border border-brand-orange/20 px-3 py-1.5 rounded-lg inline-block">
-                      {bilingual ? `¡Solo quedan ${selectedProduct.stock} en stock!` : `Only ${selectedProduct.stock} left in stock!`}
-                    </div>
-                  )}
+                  {(() => {
+                    let dispStock = selectedProduct.stock;
+                    if (selectedOption && selectedProduct.options) {
+                       const v = selectedProduct.options.find(o => o.label === selectedOption.label);
+                       if (v && v.stock != null) dispStock = v.stock;
+                    }
+                    if (dispStock === 0) {
+                      return (
+                        <div className="mt-2 text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg inline-block">
+                          {bilingual ? "Agotado" : "Out of Stock"}
+                        </div>
+                      );
+                    }
+                    return dispStock != null && dispStock > 0 && dispStock <= 5 ? (
+                      <div className="mt-2 text-xs font-bold text-brand-orange-dark bg-brand-orange-light/40 border border-brand-orange/20 px-3 py-1.5 rounded-lg inline-block">
+                        {bilingual ? `¡Solo quedan ${dispStock} en stock!` : `Only ${dispStock} left in stock!`}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 <div className="h-[1px] bg-brand-pink/30" />
@@ -1480,60 +1526,54 @@ export default function Storefront() {
                         className="w-full px-4 py-2.5 text-sm rounded-xl border border-brand-pink bg-brand-pink-light/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 transition-all font-semibold uppercase text-brand-taupe-deep placeholder:normal-case placeholder:font-normal shadow-sm"
                       />
                     </div>
-
-                    {/* Keep static bead/wrist options ONLY for the customizable bracelets card for back-compat */}
-                    {selectedProduct.id.includes('create-your-own') && (
-                      <>
-                        <div className="space-y-1.5">
-                          <label className="block text-[11px] font-bold text-brand-taupe uppercase tracking-wider">
-                            {current.modalBeadLabel}
-                          </label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {[
-                              { id: 'gold-white', label: current.modalBeadsGold },
-                              { id: 'pastel', label: current.modalBeadsPastel }
-                            ].map(bead => (
-                              <button
-                                key={bead.id}
-                                type="button"
-                                onClick={() => setBeadType(bead.id)}
-                                className={`p-2.5 rounded-xl border text-[10px] font-bold transition-all text-center cursor-pointer flex flex-col justify-center items-center gap-1 ${
-                                  beadType === bead.id
-                                    ? 'border-brand-orange bg-brand-orange-light/40 text-brand-orange-dark'
-                                    : 'border-brand-pink/50 hover:border-brand-pink hover:bg-brand-pink-light/10 text-brand-taupe-dark'
-                                }`}
-                              >
-                                <span>{bead.label}</span>
-                              </button>
-                            ))}
-                          </div>
+                    {/* Dynamic bead styles */}
+                    {selectedProduct.hasBeadStyle && selectedProduct.beadOptions && selectedProduct.beadOptions.length > 0 && (
+                      <div className="space-y-1.5 pt-2">
+                        <label className="block text-[11px] font-bold text-brand-taupe uppercase tracking-wider">
+                          {bilingual ? "Estilo de Letra" : "Letter Bead Style"}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectedProduct.beadOptions.map((bead, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setBeadType(bead)}
+                              className={`p-2.5 rounded-xl border text-[10px] font-bold transition-all text-center cursor-pointer flex flex-col justify-center items-center gap-1 ${
+                                beadType === bead
+                                  ? 'border-brand-orange bg-brand-orange-light/40 text-brand-orange-dark'
+                                  : 'border-brand-pink/50 hover:border-brand-pink hover:bg-brand-pink-light/10 text-brand-taupe-dark'
+                              }`}
+                            >
+                              <span>{bead}</span>
+                            </button>
+                          ))}
                         </div>
+                      </div>
+                    )}
 
-                        <div className="space-y-1.5">
-                          <label className="block text-[11px] font-bold text-brand-taupe uppercase tracking-wider">
-                            {current.modalSizeLabel}
-                          </label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {[
-                              { id: 'adult', label: current.modalSizeAdult },
-                              { id: 'kids', label: current.modalSizeKids }
-                            ].map(sz => (
-                              <button
-                                key={sz.id}
-                                type="button"
-                                onClick={() => setBraceletSize(sz.id)}
-                                className={`p-2 rounded-xl border text-[10px] font-bold transition-all text-center cursor-pointer ${
-                                  braceletSize === sz.id
-                                    ? 'border-brand-orange bg-brand-orange-light/40 text-brand-orange-dark'
-                                    : 'border-brand-pink/50 hover:border-brand-pink hover:bg-brand-pink-light/10 text-brand-taupe-dark'
-                                }`}
-                              >
-                                {sz.label}
-                              </button>
-                            ))}
-                          </div>
+                    {/* Dynamic wrist sizes */}
+                    {selectedProduct.hasWristSize && selectedProduct.sizeOptions && selectedProduct.sizeOptions.length > 0 && (
+                      <div className="space-y-1.5 pt-2">
+                        <label className="block text-[11px] font-bold text-brand-taupe uppercase tracking-wider">
+                          {bilingual ? "Tamaño de Muñeca" : "Wrist Size"}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectedProduct.sizeOptions.map((sz, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setBraceletSize(sz)}
+                              className={`p-2 rounded-xl border text-[10px] font-bold transition-all text-center cursor-pointer flex flex-col justify-center items-center gap-0.5 ${
+                                braceletSize === sz
+                                  ? 'border-brand-orange bg-brand-orange-light/40 text-brand-orange-dark'
+                                  : 'border-brand-pink/50 hover:border-brand-pink hover:bg-brand-pink-light/10 text-brand-taupe-dark'
+                              }`}
+                            >
+                              {sz}
+                            </button>
+                          ))}
                         </div>
-                      </>
+                      </div>
                     )}
                   </form>
                 )}
@@ -1543,7 +1583,19 @@ export default function Storefront() {
               {/* Add to Bag and Shipping block */}
               <div className="mt-8 space-y-4">
                 <button
-                  disabled={isAdding || (selectedProduct.hasCustomText && !customWord.trim()) || (selectedProduct.stock != null && cartItems.filter(i => i.productId === selectedProduct.id).reduce((sum, i) => sum + i.quantity, 0) >= selectedProduct.stock)}
+                  disabled={(() => {
+                    if (isAdding || (selectedProduct.hasCustomText && !customWord.trim())) return true;
+                    let limit = selectedProduct.stock;
+                    if (selectedOption && selectedProduct.options) {
+                      const v = selectedProduct.options.find(o => o.label === selectedOption.label);
+                      if (v && v.stock != null) limit = v.stock;
+                    }
+                    if (limit != null) {
+                      const currentTotal = cartItems.filter(i => i.productId === selectedProduct.id && i.selectedOption === selectedOption?.label).reduce((sum, i) => sum + i.quantity, 0);
+                      return currentTotal >= limit;
+                    }
+                    return false;
+                  })()}
                   onClick={handleAddToBagSubmit}
                   className={`w-full py-3.5 rounded-xl text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
                     isAdding 
@@ -1561,7 +1613,15 @@ export default function Storefront() {
                   ) : (
                     <>
                       <ShoppingBag size={14} />
-                      <span>{current.modalBtnAdd}</span>
+                      <span>{(() => {
+                        let limit = selectedProduct.stock;
+                        if (selectedOption && selectedProduct.options) {
+                          const v = selectedProduct.options.find(o => o.label === selectedOption.label);
+                          if (v && v.stock != null) limit = v.stock;
+                        }
+                        if (limit === 0) return current.soldOut;
+                        return current.modalBtnAdd;
+                      })()}</span>
                     </>
                   )}
                 </button>

@@ -10,6 +10,8 @@ export interface OrderItem {
   quantity: number;
   selectedVariant?: string;
   customText?: string;
+  beadType?: string;
+  braceletSize?: string;
   image?: string;
 }
 

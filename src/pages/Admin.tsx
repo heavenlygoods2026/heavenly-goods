@@ -57,6 +57,10 @@ export default function Admin() {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [hasCustomText, setHasCustomText] = useState(false);
   const [customTextLabel, setCustomTextLabel] = useState('');
+  const [hasBeadStyle, setHasBeadStyle] = useState(false);
+  const [beadOptions, setBeadOptions] = useState<string[]>([]);
+  const [hasWristSize, setHasWristSize] = useState(false);
+  const [sizeOptions, setSizeOptions] = useState<string[]>([]);
   const [options, setOptions] = useState<ProductOption[]>([]);
   const [imagePositions, setImagePositions] = useState<Record<string, string>>({});
   const [imageScales, setImageScales] = useState<Record<string, number>>({});
@@ -102,6 +106,10 @@ export default function Admin() {
     setHeroImage(null);
     setHasCustomText(false);
     setCustomTextLabel('');
+    setHasBeadStyle(false);
+    setBeadOptions([]);
+    setHasWristSize(false);
+    setSizeOptions([]);
     setOptions([]);
     setImagePositions({});
     setImageScales({});
@@ -120,6 +128,10 @@ export default function Admin() {
     setHeroImage(product.heroImage || null);
     setHasCustomText(product.hasCustomText || false);
     setCustomTextLabel(product.customTextLabel || '');
+    setHasBeadStyle(product.hasBeadStyle || false);
+    setBeadOptions(product.beadOptions || []);
+    setHasWristSize(product.hasWristSize || false);
+    setSizeOptions(product.sizeOptions || []);
     setOptions(product.options || []);
     setImagePositions(product.imagePositions || {});
     setImageScales(product.imageScales || {});
@@ -214,6 +226,10 @@ export default function Admin() {
       heroImage,
       hasCustomText,
       customTextLabel,
+      hasBeadStyle,
+      beadOptions,
+      hasWristSize,
+      sizeOptions,
       options,
       imagePositions,
       imageScales
@@ -377,7 +393,7 @@ export default function Admin() {
                   <label className="block text-xs font-bold text-brand-taupe uppercase tracking-wider">Product Options / Variants</label>
                   <button
                     type="button"
-                    onClick={() => setOptions(prev => [...prev, { label: '', imageTether: '' }])}
+                    onClick={() => setOptions(prev => [...prev, { label: '', imageTether: '', stock: undefined }])}
                     className="text-xs bg-brand-pink-light hover:bg-brand-pink text-brand-orange-dark font-bold px-2.5 py-1 rounded-lg border border-brand-pink transition-colors cursor-pointer"
                   >
                     + Add Option
@@ -400,13 +416,27 @@ export default function Admin() {
                           className="flex-1 px-2.5 py-1.5 rounded bg-white border border-brand-pink/30 text-xs focus:outline-none focus:border-brand-orange"
                         />
                         
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Stock"
+                          value={opt.stock !== undefined ? opt.stock : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setOptions(prev => prev.map((o, i) => i === idx ? { ...o, stock: val === '' ? undefined : parseInt(val, 10) } : o));
+                          }}
+                          className="w-16 px-2 py-1.5 rounded bg-white border border-brand-pink/30 text-xs focus:outline-none focus:border-brand-orange"
+                          title="Variant Stock (optional)"
+                        />
+
                         <select
                           value={opt.imageTether || ''}
                           onChange={(e) => {
                             const val = e.target.value;
                             setOptions(prev => prev.map((o, i) => i === idx ? { ...o, imageTether: val || undefined } : o));
                           }}
-                          className="w-28 px-1.5 py-1.5 rounded bg-white border border-brand-pink/30 text-[10px] font-bold text-brand-taupe-dark focus:outline-none"
+                          className="w-24 px-1.5 py-1.5 rounded bg-white border border-brand-pink/30 text-[10px] font-bold text-brand-taupe-dark focus:outline-none"
                         >
                           <option value="">No Tether</option>
                           {images.map((url, imgIdx) => (
@@ -450,6 +480,100 @@ export default function Admin() {
                       onChange={(e) => setCustomTextLabel(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-brand-pink/50 focus:outline-none focus:border-brand-orange bg-brand-taupe-light/30 text-xs"
                     />
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Bead Style Options Section */}
+              <div className="border-t border-brand-pink/20 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-brand-taupe uppercase tracking-wider">Enable Bead Style Options</label>
+                  <input
+                    type="checkbox"
+                    checked={hasBeadStyle}
+                    onChange={(e) => setHasBeadStyle(e.target.checked)}
+                    className="w-4 h-4 rounded text-brand-orange border-brand-pink focus:ring-brand-orange cursor-pointer"
+                  />
+                </div>
+                
+                {hasBeadStyle && (
+                  <div className="space-y-2">
+                    {beadOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. White Acrylic with Gold Lettering"
+                          value={opt}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setBeadOptions(prev => prev.map((o, i) => i === idx ? val : o));
+                          }}
+                          className="flex-1 px-3 py-2 rounded-lg border border-brand-pink/50 focus:outline-none focus:border-brand-orange bg-brand-taupe-light/30 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBeadOptions(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setBeadOptions(prev => [...prev, ''])}
+                      className="text-xs bg-brand-pink-light hover:bg-brand-pink text-brand-orange-dark font-bold px-3 py-1.5 rounded-lg border border-brand-pink transition-colors cursor-pointer w-full text-center"
+                    >
+                      + Add Bead Style Option
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Wrist Size Options Section */}
+              <div className="border-t border-brand-pink/20 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-brand-taupe uppercase tracking-wider">Enable Wrist Size Options</label>
+                  <input
+                    type="checkbox"
+                    checked={hasWristSize}
+                    onChange={(e) => setHasWristSize(e.target.checked)}
+                    className="w-4 h-4 rounded text-brand-orange border-brand-pink focus:ring-brand-orange cursor-pointer"
+                  />
+                </div>
+                
+                {hasWristSize && (
+                  <div className="space-y-2">
+                    {sizeOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. Adult Size (approx. 7 inches)"
+                          value={opt}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSizeOptions(prev => prev.map((o, i) => i === idx ? val : o));
+                          }}
+                          className="flex-1 px-3 py-2 rounded-lg border border-brand-pink/50 focus:outline-none focus:border-brand-orange bg-brand-taupe-light/30 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSizeOptions(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setSizeOptions(prev => [...prev, ''])}
+                      className="text-xs bg-brand-pink-light hover:bg-brand-pink text-brand-orange-dark font-bold px-3 py-1.5 rounded-lg border border-brand-pink transition-colors cursor-pointer w-full text-center"
+                    >
+                      + Add Wrist Size Option
+                    </button>
                   </div>
                 )}
               </div>

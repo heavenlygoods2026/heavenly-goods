@@ -167,8 +167,20 @@ export function OrdersTab() {
                       </div>
 
                       {item.selectedVariant && (
-                        <div className="text-xs mt-1 bg-brand-pink-soft/50 inline-block px-2 py-1 rounded border border-brand-pink/30 relative z-10">
+                        <div className="text-xs mt-1 bg-brand-pink-soft/50 inline-block px-2 py-1 rounded border border-brand-pink/30 relative z-10 mr-2">
                           Variant: <span className="font-bold">{item.selectedVariant}</span>
+                        </div>
+                      )}
+                      
+                      {item.beadType && (
+                        <div className="text-xs mt-1 bg-brand-orange-light/40 inline-block px-2 py-1 rounded border border-brand-orange/30 relative z-10 mr-2">
+                          Bead Style: <span className="font-bold">{item.beadType}</span>
+                        </div>
+                      )}
+
+                      {item.braceletSize && (
+                        <div className="text-xs mt-1 bg-brand-gold-light/40 inline-block px-2 py-1 rounded border border-brand-gold/30 relative z-10 mr-2">
+                          Size: <span className="font-bold">{item.braceletSize}</span>
                         </div>
                       )}
                       
